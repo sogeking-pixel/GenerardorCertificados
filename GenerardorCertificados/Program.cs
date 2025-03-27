@@ -1,12 +1,8 @@
 ﻿
-using System.IO;
-using System.Reflection.PortableExecutable;
 using System.Text;
-using System.Xml.Linq;
 using iTextSharp.text;
 using iTextSharp.text.pdf;
-using Org.BouncyCastle.Utilities.Encoders;
-using static System.Collections.Specialized.BitVector32;
+
 
 
 class Program
@@ -20,12 +16,14 @@ class Program
 
         string outputPath = Path.Combine(basePath, $"PdfCreated\\Diploma_{"aluxdmno"}.pdf");
 
-        string logoPath = Path.Combine(basePath, "Imagen\\images.png");
+        string firmaPath = Path.Combine(basePath, "Imagen\\Firma.png");
+        string logoPath = Path.Combine(basePath, "Imagen\\LogoEmpresa.png");
+        string qrPath = Path.Combine(basePath, "Imagen\\Qr.png");
 
         string fontPathName = Path.Combine(basePath, "Fonts\\AlexBrush-Regular.ttf");
         string fontPathBody = Path.Combine(basePath, "Fonts\\Josefin_Sans\\static\\JosefinSans-Regular.ttf");
         string fontPathTitle = Path.Combine(basePath, "Fonts\\Josefin_Sans\\static\\JosefinSans-Bold.ttf");
-
+       
 
 
         try
@@ -53,15 +51,20 @@ class Program
                 BaseFont baseFontName = GetBaseFont(fontPathName);
 
                 
-                Font fuenteTitulo = new Font(baseFontTitle, 50, Font.BOLD, ColorHexadecimal("1f628e") );
-                Font fuenteTexto = new Font(baseFontBody, 15, Font.NORMAL, BaseColor.BLACK);
+                Font fuenteTitulo = new Font(baseFontTitle, 45, Font.BOLD, ColorHexadecimal("1f628e") );
+                Font fuenteTexto = new Font(baseFontBody, 15, Font.NORMAL, new BaseColor(50, 50, 50));
                 Font fuenteTextoBold = new Font(baseFontTitle, 15, Font.NORMAL, BaseColor.BLACK);
 
-                Font fuenteName = new Font(baseFontName, 48, Font.NORMAL, BaseColor.BLACK);
+                Font fuenteName = new Font(baseFontName, 50, Font.NORMAL, BaseColor.BLACK);
+
+                Font fuentaPersonNombres= new Font(baseFontBody, 14, Font.BOLDITALIC, new BaseColor(10,10,10));
+                Font fuentaPersonCargo = new Font(baseFontBody, 13, Font.NORMAL, new BaseColor(80, 80, 80));
 
                 Phrase title = new Phrase();
                 Phrase body = new Phrase();                
-                Phrase name = new Phrase(); 
+                Phrase name = new Phrase();
+                Phrase cargo1 = new Phrase();
+                Phrase cargo2 = new Phrase();
 
                
 
@@ -69,8 +72,8 @@ class Program
                 title.Add(new Chunk("CERTIFICADO", fuenteTitulo));
                 name.Add(new Chunk("Yerson Omar Sanchez Leiva", fuenteName));
 
-                ColumnText.ShowTextAligned(overContent, Element.ALIGN_CENTER, title, centerX, 480, 0);
-                ColumnText.ShowTextAligned(overContent, Element.ALIGN_CENTER, name, centerX, 400, 0);
+                ColumnText.ShowTextAligned(overContent, Element.ALIGN_CENTER, title, centerX, 450, 0);
+                ColumnText.ShowTextAligned(overContent, Element.ALIGN_CENTER, name, centerX, 360, 0);
 
                 body.SetLeading(0, 1.8f);
                 body.Add(new Chunk("Por haber participado como ", fuenteTexto));
@@ -82,22 +85,34 @@ class Program
                 
 
                 ColumnText column = new ColumnText(overContent);
-                column.SetSimpleColumn(new Rectangle(90, 36, pageWidth - 90, 360));
+                column.SetSimpleColumn(new Rectangle(90, 36, pageWidth - 90, 325));
                 column.AddElement(body);
                 column.Go();
-                
 
-                if (File.Exists(logoPath))
-                {
-                    Image logo = Image.GetInstance(logoPath);
-                    logo.ScaleAbsolute(100, 100);
-                    // Posicionar la imagen (por ejemplo, en la esquina superior izquierda)
-                    logo.SetAbsolutePosition(120, 100);
-                    overContent.AddImage(logo);
+                cargo1.SetLeading(0, 1.5f);
+                cargo1.Add(new Chunk("Sanchez Leiva, Yerson\n", fuentaPersonNombres));
+                cargo1.Add(new Chunk("Director Ejecutivo", fuentaPersonCargo));
 
-                    logo.SetAbsolutePosition(pageWidth - 220, 100);
-                    overContent.AddImage(logo);
-                }
+                cargo2.SetLeading(0, 1.5f);
+                cargo2.Add(new Chunk("Sanchez Leiva, Yerson\n", fuentaPersonNombres));
+                cargo2.Add(new Chunk("Director Ejecutivo Interino", fuentaPersonCargo));
+
+                ColumnText columnCargo1 = new ColumnText(overContent);
+                column.SetSimpleColumn(new Rectangle(150, 36, 350, 125));
+                column.AddElement(cargo1);
+                column.Go();
+
+                ColumnText columnCargo2 = new ColumnText(overContent);
+                column.SetSimpleColumn(new Rectangle(520, 36, pageWidth - 150, 125));
+                column.AddElement(cargo2);
+                column.Go();
+
+
+                addImgToPdf(overContent, qrPath, 60, 485, 70);
+                addImgToPdf(overContent, logoPath, pageWidth - 250, 500, 50);
+                addImgToPdf(overContent, firmaPath, 120, 125, 50);
+                addImgToPdf(overContent, firmaPath, pageWidth - 120, 125, 50, false);
+
 
                 // Finalizar y cerrar el PDF
                 stamper.Close();
@@ -109,6 +124,22 @@ class Program
         catch (Exception ex)
         {
             Console.WriteLine("❌ Error: " + ex.Message);
+        }
+    }
+    public static void addImgToPdf(PdfContentByte overContent, string pathImagen,  float x, float y, float height, bool left = true)
+    {
+
+        if (File.Exists(pathImagen))
+        {
+            Image img = Image.GetInstance(pathImagen);
+            var porporcion = img.Width/ img.Height;
+            var newHeight = height * porporcion;
+            img.ScaleAbsolute(newHeight, height);
+            // Posicionar la imagen (por ejemplo, en la esquina superior izquierda)
+            Console.WriteLine(img.Width);
+            img.SetAbsolutePosition( left? x : x- newHeight, y);
+            overContent.AddImage(img);
+
         }
     }
 
