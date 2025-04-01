@@ -6,10 +6,9 @@ using System.Threading.Tasks;
 
 namespace GenerardorCertificados
 {
-    class Person
+    class Signatory
     {
-        public string FullNames { get; set; }
-        public string PatchSignature { get; set; }
-        public string Course { get; set; }
+        public string Name { get; set; }
+        public string Title { get; set; }
     }
 }
